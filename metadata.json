@@ -1,0 +1,5 @@
+{
+  "name": "Aether Planner",
+  "description": "An AI-powered daily timetable planner that generates optimized schedules and tracks task status with real-time notifications.",
+  "requestFramePermissions": []
+}
