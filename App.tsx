@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Task, AppView, DayReview, DayStats, RingtoneType } from './types';
 import { generateTimetable, generateDayReview } from './services/geminiService';
@@ -10,6 +11,8 @@ import TaskFormModal from './components/TaskFormModal';
 import ReviewModal from './components/ReviewModal';
 import Dashboard from './components/Dashboard';
 import SettingsModal from './components/SettingsModal';
+
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>('Setup');
