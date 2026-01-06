@@ -2,15 +2,15 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Task, AppView, DayReview, DayStats, RingtoneType } from './types';
-import { generateTimetable, generateDayReview } from './services/geminiService';
-import TaskCard from './components/TaskCard';
-import SetupForm from './components/SetupForm';
-import Header from './components/Header';
-import NotificationPanel from './components/NotificationPanel';
-import TaskFormModal from './components/TaskFormModal';
-import ReviewModal from './components/ReviewModal';
-import Dashboard from './components/Dashboard';
-import SettingsModal from './components/SettingsModal';
+import { generateTimetable, generateDayReview } from './geminiService';
+import TaskCard from './TaskCard';
+import SetupForm from './SetupForm';
+import Header from './Header';
+import NotificationPanel from './NotificationPanel';
+import TaskFormModal from './TaskFormModal';
+import ReviewModal from './ReviewModal';
+import Dashboard from './Dashboard';
+import SettingsModal from './SettingsModal';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
