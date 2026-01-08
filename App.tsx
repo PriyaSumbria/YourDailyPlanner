@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Task, AppView, DayReview, DayStats, RingtoneType } from './types';
-import { generateTimetable, generateDayReview } from './geminiService';
 import TaskCard from './TaskCard';
 import SetupForm from './SetupForm';
 import Header from './Header';
@@ -12,7 +11,51 @@ import ReviewModal from './ReviewModal';
 import Dashboard from './Dashboard';
 import SettingsModal from './SettingsModal';
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const generateTimetableAPI = async (
+  userInput: string,
+  dayStart: string,
+  dayEnd: string,
+  carryOverTasks: Task[]
+): Promise<Task[]> => {
+  const res = await fetch('/api/generateTimetable', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userInput,
+      dayStart,
+      dayEnd,
+      carryOverTasks,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to generate timetable');
+  }
+
+  const data = await res.json();
+
+  return data.tasks.map((task: any, index: number) => ({
+    ...task,
+    id: `task-${Date.now()}-${index}`,
+    status: 'Pending',
+    notified: false,
+  }));
+};
+
+const generateDayReviewAPI = async (tasks: Task[]): Promise<DayReview> => {
+  const res = await fetch('/api/generateDayReview', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tasks }),
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to generate day review');
+  }
+
+  return res.json();
+};
+
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>('Setup');
@@ -185,17 +228,18 @@ const App: React.FC = () => {
   }, [tasks, alarmDate]);
 
   const handleDayEndAlarm = async () => {
-    setIsReviewOpen(true);
-    setIsReviewLoading(true);
-    try {
-      const review = await generateDayReview(tasks);
-      setCurrentReview(review);
-    } catch (error) {
-      console.error("Failed to generate review:", error);
-    } finally {
-      setIsReviewLoading(false);
-    }
-  };
+  setIsReviewOpen(true);
+  setIsReviewLoading(true);
+
+  try {
+    const review = await generateDayReviewAPI(tasks);
+    setCurrentReview(review);
+  } catch (error) {
+    console.error('Failed to generate review:', error);
+  } finally {
+    setIsReviewLoading(false);
+  }
+};
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -243,24 +287,33 @@ const App: React.FC = () => {
     return () => clearInterval(timer);
   }, [tasks, dayStart, dayEnd, alarmDate, firedAlarms, triggerNotification]);
 
-  const handleGenerate = async (input: string, start: string, end: string, carryOver: Task[], selectedDate: string) => {
-    setIsLoading(true);
-    setDayStart(start);
-    setDayEnd(end);
-    setAlarmDate(selectedDate);
-    try {
-      const generatedTasks = await generateTimetable(input, start, end, carryOver);
-      const orderedTasks = generatedTasks.map((t, i) => ({ ...t, order: i }));
-      setTasks(orderedTasks);
-      setCarryOverTasks([]);
-      setView('Active');
-    } catch (error) {
-      console.error("Failed to generate timetable:", error);
-      alert("Something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const handleGenerate = async (
+  input: string,
+  start: string,
+  end: string,
+  carryOver: Task[],
+  selectedDate: string
+) => {
+  setIsLoading(true);
+  setDayStart(start);
+  setDayEnd(end);
+  setAlarmDate(selectedDate);
+
+  try {
+    const generatedTasks = await generateTimetableAPI(input, start, end, carryOver);
+    const orderedTasks = generatedTasks.map((t, i) => ({ ...t, order: i }));
+
+    setTasks(orderedTasks);
+    setCarryOverTasks([]);
+    setView('Active');
+  } catch (error) {
+    console.error(error);
+    alert('Failed to generate timetable.');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const updateTaskStatus = (id: string, status: Task['status']) => {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t));
